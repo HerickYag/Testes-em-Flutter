@@ -12,7 +12,7 @@ class MagosListScreen extends StatefulWidget {
 }
 
 class _MagosListScreenState extends State<MagosListScreen> {
-  late List<Mago> _magos;
+  late List<Mago> _magos = [];
 
   @override
   void initState() {
@@ -21,14 +21,25 @@ class _MagosListScreenState extends State<MagosListScreen> {
   }
 
   void _loadMagos() {
-    // Decodifica a string JSON para um Map [cite: 26]
-    final Map<String, dynamic> jsonData = jsonDecode(magosJsonData);
-    // Extrai a lista de magos do Map
-    final List<dynamic> magosListJson = jsonData['magos'];
-    // Converte a lista JSON em uma lista de objetos Mago
-    setState(() {
-      _magos = magosListJson.map((json) => Mago.fromJson(json)).toList();
-    });
+    try {
+      final Map<String, dynamic> jsonData = jsonDecode(magosJsonData);
+      final List<dynamic>? magosListJson = jsonData['magos'] as List<dynamic>?; // Added type cast and nullable
+      if (magosListJson == null) {
+        // Handle case where 'magos' key is missing or not a list
+        print('Error: "magos" key not found or not a list in JSON data.');
+        _magos = []; // Initialize with empty list or handle error appropriately
+        return;
+      }
+      setState(() {
+        _magos = magosListJson.map((json) => Mago.fromJson(json as Map<String, dynamic>)).toList(); // Added type cast for json
+      });
+    } catch (e) {
+      print('Error decoding JSON or processing mage data: $e');
+      // Handle error, e.g., by setting _magos to an empty list or showing an error message
+      setState(() {
+        _magos = [];
+      });
+    }
   }
 
   @override
@@ -43,14 +54,18 @@ class _MagosListScreenState extends State<MagosListScreen> {
         itemBuilder: (context, index) {
           final mago = _magos[index];
           return Card(
+            elevation: 3,
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.deepPurple.shade100,
                 child: const Icon(Icons.person, color: Colors.deepPurple),
               ),
-              title: Text(mago.nome, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('${mago.idade} anos'),
+              title: Text(
+                mago.nome,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text('Idade: ${mago.idade}'),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
                 Navigator.push(
